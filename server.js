@@ -3,36 +3,38 @@ const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 const helmet = require("helmet");
-const POKEDEX = require("./pokedex.json");
+const MOVIES = require("./movies-data-small.json");
 
 console.log(process.env.API_TOKEN);
+
+/*
+Users can search for movies by
+genre -(query string, case insensitive)
+country -(query string, case insensitive)
+avg_vote -(greater than or equal to the supplied number)
+
+endpoint = GET '/movie'
+header {Authorization=Bearer ${API_Token}}
+include general security, best practice headers
+and support of CORS
+
+ "filmtv_ID": 2,
+    "film_title": "Bugs Bunny's Third Movie: 1001 Rabbit Tales",
+    "year": 1982,
+    "genre": "Animation",
+    "duration": 76,
+    "country": "United States",
+    "director": "David Detiege, Art Davis, Bill Perez",
+    "actors": "N/A",
+    "avg_vote": 7.7,
+    "votes": 28
+*/
 
 const app = express();
 
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors());
-
-const validTypes = [
-  "Bug",
-  "Dark",
-  "Dragon",
-  "Electric",
-  "Fairy",
-  "Fighting",
-  "Fire",
-  "Flying",
-  "Ghost",
-  "Grass",
-  "Ground",
-  "Ice",
-  "Normal",
-  "Poison",
-  "Psychic",
-  "Rock",
-  "Steel",
-  "Water"
-];
 
 app.use(function validateBearerToken(req, res, next) {
   //const bearerToken = req.get("Authorization").split(" ")[1];
@@ -41,44 +43,37 @@ app.use(function validateBearerToken(req, res, next) {
 
   console.log("validate bearer token middleware");
 
-  //if (bearerToken !== apiToken) {
-  //return res.status(401).json({ error: "Unauthorized request" });
-  //}
-
   if (!authToken || authToken.split(" ")[1] !== apiToken) {
     return res.status(401).json({ error: "Unauthorized request" });
   }
-
   //move to the next middleware
   next();
 });
 
-function handleGetTypes(req, res) {
-  res.json(validTypes);
-}
+// ========= GET MOVIES =========== //
 
-app.get("/types", handleGetTypes);
+app.get("/movie", function handleGetMovie(req, res) {
+  let response = MOVIES;
 
-//app.get("/pokemon", handleGetPokemon);
-
-app.get("/pokemon", function handleGetPokemon(req, res) {
-  //res.send("Hello, Pokemon!");
-
-  let response = POKEDEX.pokemon;
-
-  //filter our pokemon by name if name query param is present
-  if (req.query.name) {
-    response = response.filter(pokemon =>
+  //filter our movie by country if country query param is present
+  if (req.query.country) {
+    response = response.filter(movie =>
       //case insensitive searching
-      pokemon.name.toLowerCase().includes(req.query.name.toLowerCase())
+      movie.country.toLowerCase().includes(req.query.country.toLowerCase())
     );
   }
 
-  //filter our pokemon by type if type query param is present
-  if (req.query.type) {
-    response = response.filter(pokemon =>
-      pokemon.type.includes(req.query.type)
+  //filter our movie by genre if genre query param is present
+  if (req.query.genre) {
+    response = response.filter(movie =>
+      movie.genre.toLowerCase().includes(req.query.genre.toLowerCase())
     );
+  }
+
+  //filter our movie by rating if rating query param is present
+  if (req.query.avg_vote) {
+    let userRating = Number(req.query.avg_vote);
+    response = response.filter(movie => Number(movie.avg_vote) >= userRating);
   }
   res.json(response);
 });
