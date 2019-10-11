@@ -13,6 +13,9 @@
     "url": "git+https://github.com/cssteffen/node-movies-api.git"
   },
   "keywords": [],
+  "engines": {
+    "node": "10.16.2"
+  },
   "author": "",
   "license": "ISC",
   "bugs": {
